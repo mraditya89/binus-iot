@@ -1,0 +1,152 @@
+==========================================================
+A. Registrasi Akun Xirka IoT Platform
+==========================================================
+1. Xirka IoT Platform
+    url : 202.148.1.57:8200
+
+2. Registrasi Akun
+- Masuk ke halaman registrasi , kemudian isi 
+  form registrasi: username, email dan password
+- Lakukan verifikasi email dengan menggunakan 
+  link yang dikirim oleh system ke email yang sudah didaftarkan. 
+- Setelah verifikasi, login dengan menggunakan 
+  username/email dan password yang telah didaftarkan
+
+3. Buat Aplikasi Dashboard
+- Buat aplikasi pada dashboard Xirka IoT Platform. Misalkan :
+  - AppId : DemoEsp32
+  - AppName : Demo Aplikasi ESP32
+  - Description: Aplikasi IoT sederhana menggunakan perangkat ESP32
+- Catatan: jika nama AppId sudah dipakai oleh akun lain, 
+  silakan ganti AppId dengan nama yang lain. 
+- Setelah mendaftarkan Aplikasi, anda akan mendapatkan informasi 
+  berupa AppKey, Endpoint MQTT broker, dan HTTP.
+ 
+
+4. Registrasi perangkat
+- Daftarkan perangkat dengan menentukan Device Name
+- Jika ”device name” sudah terpakai, gunakan nama yang lain.
+- Nama perangkat akan digunakan sebagai "topik" pada 
+  pengiriman pesan mqtt.
+
+5. Resume
+-  Catat AppKey, Topik dan broker Endpoint
+   - AppKey : app-DemoEsp32.DRr0p0m3l1UsG1hLgwT1QfVlmLA4FD
+     - username : app-DemoEsp32
+     - password : DRr0p0m3l1UsG1hLgwT1QfVlmLA4FD
+   - Topic : perangkat1
+   - Broker Endpoint : mqtt://202.148.1.57:1883
+
+==========================================================
+B. Percobaan 1 
+==========================================================
+1. Buka 2 (dua) command prompt / terminal, arahkan di lokasi direktori 
+   mosquitto berada. 
+   cd C:\Program Files\mosquitto
+
+2. Terminal 1:
+   Subscribe topik pada perangkat device yang telah didaftarkan dengan 
+   menggunakan akun anda:
+   mosquitto_sub -h "<ip_broker>" -p <port_broker> -u <username> 
+   -P <password> -t "<nama_perangkat>"
+   atau
+   mosquitto_sub -h "202.148.1.57" -p 1883 -u app-DemoEsp32 
+   -P DRr0p0m3l1UsG1hLgwT1QfVlmLA4FD -t "perangkat1"
+
+3. Terminal 2 kirim pesan :
+   mosquitto_pub -h "<ip_broker>" -p <port_broker> -u <username> 
+   -P <password> -t "<nama_perangkat>"
+   atau
+   mosquitto_pub -h "202.148.1.57" -p 1883 -u app-DemoEsp32 
+   -P DRr0p0m3l1UsG1hLgwT1QfVlmLA4FD -t "perangkat1" 
+   -m "hello form terminal 2"
+
+==========================================================
+C. Percobaan 2
+==========================================================
+1. Pergi ke halaman dashboard -> aplikasi -> perangkat1. Kemudian 
+   pilih menu mesasage log. Klik listen topik, pastikan status 
+   berubah menjadi listening Topic
+
+2. Kirim kembali pesan sebagaimana langkah 3 pada percobaan 1, 
+   perhatikan pesan masuk pada dashboard anda. :)
+
+3. Meski pesan anda masuk, pesan anda tidak tersimpan di database. 
+   Lihat di menu database, tidak ada pesan masuk. :(
+
+4. Supaya pesan anda tersimpan dalam database, 
+   pesan anda harus mengikuti format json:
+   {"timestamp":<timestamp>, "payload": {"key1": value1, "key2", value2, .... }}
+   - timestamp (OPTIONAL): Epoch Time (number of seconds that 
+     have passed since 1 January 1970 00:00 UTC) 
+   - payload : data yang akan anda kirim berupa pasangan 
+     key-value contoh : 
+     {"payload": {"humidity": 12, "temperature": 32}}
+
+5. kirimkan data : 
+           {"payload": {"humidity": 12, "temperature", 32}} 
+   melalui mosquitto client. 
+   
+   Catatan : Supaya bisa mengirimkan karakter ", gunakan tanda \ sebelumnya. 
+   
+   Jadi perintah yang kita pakai adalah:
+   mosquitto_pub -h "202.148.1.57" -p 1883 -u app-DemoEsp32 
+   -P DRr0p0m3l1UsG1hLgwT1QfVlmLA4FD -t "perangkat1" 
+   -m  "{\"payload\": {\"humidity\": 12, \"temperature\": 32}}"
+
+==========================================================
+D. Percobaan 3
+==========================================================
+Alternatif pengiriman data bisa menggunakan fitur publish melalui dashboard xirka, 
+yaitu menggunakan fitur send data. 
+1. Pastikan anda subscribe topic dengan menggunakan mosquitto sebagaimana 
+   pada percobaan 1 langkah 2  
+2. Pilih menu "send data", kemudian generate payload. Isi nilai key / value 
+   Isikan key dengan humidity dan temperature dengan nilai bebas. 
+   Kemudian klik tombol generate payload.
+3. Klik tombol publish data untuk mengirimkan data. 
+4. Pesan akan tampil pada terminal dan data akan tersimpan pada database. 
+
+==========================================================
+E. Percobaan 4
+==========================================================
+Kini kita akan membuat card-widget untuk memantau data yang masuk 
+pada broker melalui aplikasi kita.
+1. Pada halaman dashboard, pilih aplikasi yang telah anda buat. 
+   kemudian pilih card list, klik link create now.
+
+2. Buat 2 card dengan nilai berikut:
+    card 1 : 
+        type : line chart, 
+        data key : humidity, temperature, 
+        data unit : %, celcius
+    card 1 : 
+        type : value card, 
+        data key : humidity, temperature, 
+        data unit : %, celcius
+
+3. Pindah halaman ke aplikasi => perangkat, kemudian pilih menu monitoring. 
+   Klik listen topik untuk memantau data yang masuk. Pastikan status berubah 
+   menjadi connected to server.
+
+4. Kirim data menggunakan mosquitto client. Varisikan nilai humidity, dan temperature.
+   mosquitto_pub -h "202.148.1.57" -p 1883 -u app-DemoEsp32 
+   -P DRr0p0m3l1UsG1hLgwT1QfVlmLA4FD -t "perangkat1" 
+   -m  "{\"payload\": {\"humidity\": 12, \"temperature\": 32}}"
+
+5. Data yang dikirim akan di tampilkan pada dashboard dalam waktu singkat.
+
+
+==========================================================
+F. Percobaan 5
+==========================================================
+Berikutnya kita akan mengirim / menerima data menggunakan python.
+
+1. Buat folder baru kemudian, arahkan terminal pada folder tersebut. 
+2. Pastikan anda menggunakan python 3, ketik perintah python --version
+3. Install library paho-mqtt dengan menggunakan pip:
+    pip install paho-mqtt
+4. Pastikan library telah terinstall dengan mengecek eksistensi library 
+   dengan perintah pip list. perhatikan, paho-mqtt terdapat pada daftar 
+   librari kita.
+5. 
